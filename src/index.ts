@@ -18,6 +18,7 @@ new p5((p: p5) => {
   p.mousePressed = () => p.redraw();
 
   p.setup = () => {
+    p.pixelDensity(window.devicePixelRatio || 1);
     p.createCanvas(p.windowWidth, p.windowHeight);
     p.background(background);
 
@@ -73,7 +74,7 @@ new p5((p: p5) => {
       const cell = triangles[i];
 
       p.fill(palette[colorIndex]);
-      p.beginShape(p.TRIANGLES);
+      p.beginShape();
 
       for (let j = 0; j < cell.length; j++) {
         const [x, y] = points[cell[j]];
