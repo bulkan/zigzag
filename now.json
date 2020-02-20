@@ -1,5 +1,4 @@
 {
   "version": 2,
-  "alias": ["zigzag.bulkan.dev"],
   "builds": [{ "src": "package.json", "use": "@now/static-build" }]
 }

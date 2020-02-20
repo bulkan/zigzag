@@ -1,26 +1,25 @@
 {
-  "name": "walker",
+  "name": "zigzag",
   "version": "1.0.0",
-  "description": "just a random walker",
+  "description": "zigzag",
   "main": "index.js",
-  "repository": "https://github.com/bulkan/walker",
+  "repository": "https://github.com/bulkan/zigzag",
   "scripts": {
     "dev": "parcel serve index.html",
     "build": "parcel build index.html",
-    "deploy": "now deploy",
+    "deploy": "now deploy --prod",
     "test": "jest src",
     "now-build": "yarn build"
   },
   "author": "Bulkan Evcimen <bulkan@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "color": "^3.1.2",
-    "dat.gui": "^0.7.6",
-    "jest": "^25.1.0",
+    "delaunay-triangulate": "^1.1.6",
     "nice-color-palettes": "^3.0.0",
     "p5": "^0.10.2"
   },
   "devDependencies": {
+    "jest": "^25.1.0",
     "@types/p5": "^0.9.0",
     "parcel-bundler": "^1.12.4",
     "typescript": "^3.7.5"
