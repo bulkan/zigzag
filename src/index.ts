@@ -1,10 +1,21 @@
-import p5, { Color } from 'p5';
-import palettes from 'nice-color-palettes/100.json';
+import p5 from "p5";
+import palettes from "nice-color-palettes";
+import dt from "delaunay-triangulate";
 
 new p5((p: p5) => {
   let palette = p.random(palettes);
   let background = "white";
   let square;
+
+  let points: Array<Array<number>>;
+  let triangles: Array<Array<number>>;
+
+  const offset = 100;
+  const MAX_POINTS = 26;
+
+  let colorIndex = 0;
+
+  p.mousePressed = () => p.redraw();
 
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
@@ -12,17 +23,36 @@ new p5((p: p5) => {
 
     document.onkeydown = function(e) {
       if (e.metaKey && e.keyCode === 83) {
-        p.saveCanvas(`zigzag-${Date.now()}`, "png")
+        p.saveCanvas(`zigzag-${Date.now()}`, "png");
         return false;
       }
-    }
-    square = fitSquares(p.windowWidth - 100, p.windowHeight - 100, 1);
+    };
+
+    square = fitSquares(p.windowWidth - offset, p.windowHeight - offset, 1);
+
+    points = Array.from(new Array(MAX_POINTS)).map(() => [
+      p.random(square),
+      p.random(square)
+    ]);
+
+    points = [
+      [0, 0],
+      [0, square],
+      [square, 0],
+      [square, square],
+      ...points
+    ]
+
+    triangles = dt(points);
+    p.noLoop();
   };
 
   p.draw = () => {
 
+    const frameThickness = 10;
+
     p.stroke("black");
-    p.strokeWeight(10);
+    p.strokeWeight(frameThickness);
 
     p.translate(p.windowWidth / 2, p.windowHeight / 2);
 
@@ -32,34 +62,35 @@ new p5((p: p5) => {
     // outer rect - frame
     p.rect(frameX, frameY, square, square);
 
-    // inner frame
-    const offset = 20;
+    p.translate(frameX, frameY);
 
+    p.stroke("black");
     p.strokeWeight(5);
 
-
-    const lineX = frameX + offset;
+    p.fill(palette[colorIndex]);
     
-    p.beginShape(p.POINTS);
+    for (let i = 0; i < triangles.length; i++) {
+      const cell = triangles[i];
 
-    // top line
-    for (let x = lineX; x < square / 2 - offset; x += 10) {
-      p.vertex(x, -square / 2 + offset * 2);
+      p.fill(palette[colorIndex]);
+      p.beginShape(p.TRIANGLES);
+
+      for (let j = 0; j < cell.length; j++) {
+        const [x, y] = points[cell[j]];
+        p.vertex(x, y);
+      }
+
+      p.vertex(points[cell[0]][0], points[cell[0]][1]);
+      p.endShape();
+      colorIndex = (colorIndex + palette.length - 1) % palette.length;
     }
-    
-    // p.vertex(x, y);
-    // p.vertex(x + square, y);
-    // p.vertex(x, y + square);
-    // p.vertex(x + square, y + square);
 
-    p.endShape();
-    p.noLoop();
   };
 });
 
-
 function fitSquares(width: number, height: number, n) {
-  let sx, sy = 0;
+  let sx,
+    sy = 0;
 
   const px = Math.ceil(Math.sqrt((n * width) / height));
 
