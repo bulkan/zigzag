@@ -11,15 +11,21 @@ new p5((p: p5) => {
   let triangles: Array<Array<number>>;
 
   const offset = 100;
-  const MAX_POINTS = 200;
+  const MAX_POINTS = 100;
 
   let colorIndex = 0;
 
-  function drawInnerLines(a, b, c) {
-    // console.log(a, b, c);
-    const nbLines = 5;
+  const trigArea = (a, b, c) => Math.abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y)) / 2);
 
-    for (let i = 0; i < 5; i++) {
+  function drawInnerLines(a, b, c) {
+    const area = trigArea(a, b, c);
+    
+    const nbLines = 5; //p.floor(p.map(area, 0, 20000, 1, 5, true));
+    // const strokeWeight = p.floor(p.map(area, 0, 20000, 0, 5, true));
+    
+    // p.strokeWeight(strokeWeight);
+
+    for (let i = 0; i < nbLines; i++) {
       let xa = p.map(i, 0, nbLines, a.x, c.x);
       let ya = p.map(i, 0, nbLines, a.y, c.y);
       let xb = p.map(i, 0, nbLines, b.x, c.x);
@@ -64,7 +70,7 @@ new p5((p: p5) => {
 
   p.draw = () => {
 
-    const frameThickness = 10;
+    const frameThickness = 5;
 
     p.stroke("black");
     p.strokeWeight(frameThickness);
@@ -85,8 +91,8 @@ new p5((p: p5) => {
     for (let i = 0; i < triangles.length; i++) {
       const cell = triangles[i];
 
-      p.fill(palette[colorIndex]);
-      p.beginShape();
+      // p.fill(palette[colorIndex]);
+      p.beginShape(p.TRIANGLE_STRIP);
 
       for (let j = 0; j < cell.length; j++) {
         const pnt = points[cell[j]];
@@ -95,9 +101,11 @@ new p5((p: p5) => {
 
       p.vertex(points[cell[0]][0], points[cell[0]][1]);
       p.endShape();
-      colorIndex = (colorIndex + palette.length - 1) % palette.length;
 
-      const [a, b, c] = p.shuffle(cell.map(i => points[i]));
+      // colorIndex = (colorIndex + palette.length - 1) % palette.length;
+      colorIndex = p.floor(p.random(0, palette.length - 1));
+
+      const [a, b, c] = (cell.map(i => points[i]));
 
       drawInnerLines(a, b, c);
     }
