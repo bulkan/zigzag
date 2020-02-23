@@ -7,13 +7,27 @@ new p5((p: p5) => {
   let background = "white";
   let square;
 
-  let points: Array<Array<number>>;
+  let points: Array<p5.Vector>;
   let triangles: Array<Array<number>>;
 
   const offset = 100;
-  const MAX_POINTS = 26;
+  const MAX_POINTS = 200;
 
   let colorIndex = 0;
+
+  function drawInnerLines(a, b, c) {
+    // console.log(a, b, c);
+    const nbLines = 5;
+
+    for (let i = 0; i < 5; i++) {
+      let xa = p.map(i, 0, nbLines, a.x, c.x);
+      let ya = p.map(i, 0, nbLines, a.y, c.y);
+      let xb = p.map(i, 0, nbLines, b.x, c.x);
+      let yb = p.map(i, 0, nbLines, b.y, c.y);
+
+      p.line(xa, ya, xb, yb);
+    }
+  }
 
   p.mousePressed = () => p.redraw();
 
@@ -31,20 +45,20 @@ new p5((p: p5) => {
 
     square = fitSquares(p.windowWidth - offset, p.windowHeight - offset, 1);
 
-    points = Array.from(new Array(MAX_POINTS)).map(() => [
+    points = Array.from(new Array(MAX_POINTS)).map(() => p.createVector(
       p.random(square),
       p.random(square)
-    ]);
+    ));
 
     points = [
-      [0, 0],
-      [0, square],
-      [square, 0],
-      [square, square],
+      p.createVector(0, 0),
+      p.createVector(0, square),
+      p.createVector(square, 0),
+      p.createVector(square, square),
       ...points
     ]
 
-    triangles = dt(points);
+    triangles = dt(points.map(p => [p.x, p.y]));
     p.noLoop();
   };
 
@@ -66,9 +80,7 @@ new p5((p: p5) => {
     p.translate(frameX, frameY);
 
     p.stroke("black");
-    p.strokeWeight(5);
-
-    p.fill(palette[colorIndex]);
+    p.strokeWeight(6);
     
     for (let i = 0; i < triangles.length; i++) {
       const cell = triangles[i];
@@ -77,15 +89,18 @@ new p5((p: p5) => {
       p.beginShape();
 
       for (let j = 0; j < cell.length; j++) {
-        const [x, y] = points[cell[j]];
-        p.vertex(x, y);
+        const pnt = points[cell[j]];
+        p.vertex(pnt.x, pnt.y);
       }
 
       p.vertex(points[cell[0]][0], points[cell[0]][1]);
       p.endShape();
       colorIndex = (colorIndex + palette.length - 1) % palette.length;
-    }
 
+      const [a, b, c] = p.shuffle(cell.map(i => points[i]));
+
+      drawInnerLines(a, b, c);
+    }
   };
 });
 
