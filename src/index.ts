@@ -1,13 +1,15 @@
-import p5 from "p5";
+import p5, { Vector } from "p5";
 import palettes from "nice-color-palettes";
 import dt from "delaunay-triangulate";
+import { areaOfTrig } from "./util";
 
 new p5((p: p5) => {
   let palette = p.random(palettes);
   let background = "white";
   let square;
+  let areaOfSquare;
 
-  let points: Array<p5.Vector>;
+  let points: Array<Vector>;
   let triangles: Array<Array<number>>;
 
   const offset = 100;
@@ -15,15 +17,14 @@ new p5((p: p5) => {
 
   let colorIndex = 0;
 
-  const trigArea = (a, b, c) => Math.abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y)) / 2);
-
-  function drawInnerLines(a, b, c) {
-    const area = trigArea(a, b, c);
+  function drawInnerLines(triangle) {
+    const [a, b, c] = triangle;
+    const area = areaOfTrig(a, b, c);
     
-    const nbLines = 5; //p.floor(p.map(area, 0, 20000, 1, 5, true));
-    // const strokeWeight = p.floor(p.map(area, 0, 20000, 0, 5, true));
+    const nbLines = p.floor(p.map(p.log(area), 0, 11, 0, 40))
+    const strokeWeight = p.map(nbLines, 0, 40, 5, 1);
     
-    // p.strokeWeight(strokeWeight);
+    p.strokeWeight(strokeWeight);
 
     for (let i = 0; i < nbLines; i++) {
       let xa = p.map(i, 0, nbLines, a.x, c.x);
@@ -33,6 +34,8 @@ new p5((p: p5) => {
 
       p.line(xa, ya, xb, yb);
     }
+
+    return area;
   }
 
   p.mousePressed = () => p.redraw();
@@ -50,19 +53,20 @@ new p5((p: p5) => {
     };
 
     square = fitSquares(p.windowWidth - offset, p.windowHeight - offset, 1);
+    areaOfSquare = square * square;
 
     points = Array.from(new Array(MAX_POINTS)).map(() => p.createVector(
       p.random(square),
       p.random(square)
     ));
 
-    points = [
+    points = p.shuffle([
       p.createVector(0, 0),
-      p.createVector(0, square),
       p.createVector(square, 0),
+      p.createVector(0, square),
       p.createVector(square, square),
       ...points
-    ]
+    ]);
 
     triangles = dt(points.map(p => [p.x, p.y]));
     p.noLoop();
@@ -70,6 +74,7 @@ new p5((p: p5) => {
 
   p.draw = () => {
 
+    p.noFill();
     const frameThickness = 5;
 
     p.stroke("black");
@@ -87,12 +92,14 @@ new p5((p: p5) => {
 
     p.stroke("black");
     p.strokeWeight(6);
+
+    const areas = [];
     
     for (let i = 0; i < triangles.length; i++) {
       const cell = triangles[i];
 
       // p.fill(palette[colorIndex]);
-      p.beginShape(p.TRIANGLE_STRIP);
+      p.beginShape();
 
       for (let j = 0; j < cell.length; j++) {
         const pnt = points[cell[j]];
@@ -100,15 +107,17 @@ new p5((p: p5) => {
       }
 
       p.vertex(points[cell[0]][0], points[cell[0]][1]);
-      p.endShape();
+      p.endShape(p.CLOSE);
 
       // colorIndex = (colorIndex + palette.length - 1) % palette.length;
-      colorIndex = p.floor(p.random(0, palette.length - 1));
+      // colorIndex = p.floor(p.random(0, palette.length - 1));
 
-      const [a, b, c] = (cell.map(i => points[i]));
+      const triangle = cell.map(i => points[i]);
 
-      drawInnerLines(a, b, c);
+      areas.push(drawInnerLines(p.shuffle(triangle)));
     }
+
+    console.log(p.max(areas));
   };
 });
 
