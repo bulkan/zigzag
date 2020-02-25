@@ -13,7 +13,7 @@ new p5((p: p5) => {
   let triangles: Array<Array<number>>;
 
   const offset = 100;
-  const MAX_POINTS = 100;
+  const MAX_POINTS = 800;
 
   let colorIndex = 0;
 
@@ -21,8 +21,9 @@ new p5((p: p5) => {
     const [a, b, c] = triangle;
     const area = areaOfTrig(a, b, c);
     
-    const nbLines = p.floor(p.map(p.log(area), 0, 11, 0, 40))
-    const strokeWeight = p.map(nbLines, 0, 40, 5, 1);
+    // const nbLines = p.floor(p.map(p.log(area), 0, 11, 0, 40))
+    const nbLines = p.floor(p.map(p.log(area * 0.01 + 1), 0, 12, 0, 40, true));
+    const strokeWeight = p.floor(p.map(p.log(area * 0.01 + 1), 0, 12, 1, 15, true));
     
     p.strokeWeight(strokeWeight);
 
@@ -60,20 +61,22 @@ new p5((p: p5) => {
       p.random(square)
     ));
 
-    points = p.shuffle([
+    points = [
       p.createVector(0, 0),
       p.createVector(square, 0),
       p.createVector(0, square),
       p.createVector(square, square),
+      // p.createVector(square / 2, 0),
+      // p.createVector(0, square),
+      // p.createVector(square, square),
       ...points
-    ]);
+    ];
 
     triangles = dt(points.map(p => [p.x, p.y]));
     p.noLoop();
   };
 
   p.draw = () => {
-
     p.noFill();
     const frameThickness = 5;
 
@@ -91,9 +94,7 @@ new p5((p: p5) => {
     p.translate(frameX, frameY);
 
     p.stroke("black");
-    p.strokeWeight(6);
-
-    const areas = [];
+    p.strokeWeight(5);
     
     for (let i = 0; i < triangles.length; i++) {
       const cell = triangles[i];
@@ -114,10 +115,15 @@ new p5((p: p5) => {
 
       const triangle = cell.map(i => points[i]);
 
-      areas.push(drawInnerLines(p.shuffle(triangle)));
-    }
+      // const [a, b, c] = triangle;
+      // const distances = [
+      //   p.dist(a.x, a.y, b.x, b.y),
+      //   p.dist(b.x, b.y, c.x, c.y),
+      //   p.dist(a.x, a.y, c.x, c.y)
+      // ];
 
-    console.log(p.max(areas));
+      drawInnerLines(p.shuffle(triangle));
+    }
   };
 });
 
