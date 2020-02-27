@@ -14,17 +14,28 @@ new p5((p: p5) => {
   let triangles: Array<Array<number>>;
 
   const offset = 100;
-  const MAX_POINTS = 80;
+  const MAX_POINTS = 200;
 
-  function drawInnerLines(triangle) {
+  function getAngles(triangle) {    
+    const [A, B, C] = triangle;
+
+    const ab = p5.Vector.sub(B, A);  
+    const ac = p5.Vector.sub(C, A);
+    const angleA = p.degrees(p.acos(ab.dot(ac) / (ab.mag() * ac.mag())));
+    // print(angleA.toFixed(1));
+    
+    const ba = p5.Vector.sub(B, A);
+    const bc = p5.Vector.sub(B, C);
+    const angleB = p.degrees(p.acos(ba.dot(bc) / (ba.mag() * bc.mag())));
+    // print(angleB.toFixed(1));
+    
+    const angleC = (180 - angleA - angleB);
+    
+    return [angleA, angleB, angleC];
+  }
+
+  function drawLines(nbLines, triangle) {
     const [a, b, c] = triangle;
-    const area = areaOfTrig(a, b, c);
-    
-    // const nbLines = p.floor(p.map(p.log(area), 0, 11, 0, 40))
-    const nbLines = p.floor(p.map(p.log(area * 0.001 + 1), 0, 12, 0, 40, true));
-    const strokeWeight = p.floor(p.map(p.log(area * 0.01 + 1), 0, 12, 1, 15, true));
-    
-    p.strokeWeight(strokeWeight);
 
     for (let i = 0; i < nbLines; i++) {
       let xa = p.map(i, 0, nbLines, a.x, c.x);
@@ -34,11 +45,39 @@ new p5((p: p5) => {
 
       p.line(xa, ya, xb, yb);
     }
+  }
+  
+  function drawInnerLines(triangle) {
+    const [a, b, c] = triangle;
+    const area = areaOfTrig(a, b, c);
 
+    const angles = getAngles(triangle);
+    const twoAnglesSame = (new Set(angles.map(a => p.floor(a)))).size !== angles.length;
+    const isSkinnyTriangle = angles.some(ang => ang < 7);
+    
+    // const maxLines = isSkinnyTriangle ? 1 : 40;
+    // const maxStroke = isSkinnyTriangle ? 1 : 5;
+
+    let nbLines = p.floor(p.map(p.log(area * 0.1 + 1), 0, 12, 0, 50, true));
+    let strokeWeight = 1; //p.floor(p.map(p.log(area * 0.1 + 1), 0, 12, 1, 5, true));
+
+    if (isSkinnyTriangle) {
+      nbLines = 1;
+      strokeWeight = 1;
+    }
+    
+    p.strokeWeight(strokeWeight);
+    
+    if (twoAnglesSame) {
+      drawLines(nbLines, triangle);
+    } else {
+      drawLines(nbLines, [c, b, a]); // horizontal
+    }
+
+    //   drawLines(...([c, a, b])); // left
+  
     return area;
   }
-
-  // p.mousePressed = () => p.redraw();
 
   p.setup = () => {
     p.pixelDensity(window.devicePixelRatio || 1);
@@ -70,9 +109,9 @@ new p5((p: p5) => {
 
     points = p.shuffle([
       ...cornerPoints,
-      // p.createVector(square / 2, 0),
-      // p.createVector(0, square),
-      // p.createVector(square, square),
+      // p.createVector(square / 2, 100),
+      // p.createVector(10, 200),
+      // p.createVector(square - 10, 200),
       ...points
     ]);
 
@@ -107,30 +146,17 @@ new p5((p: p5) => {
       const cell = triangles[i];
       // p.fill(palette[colorIndex]);
       // colorIndex = (colorIndex + palette.length - 1) % palette.length;
-
+      
+      p.strokeWeight(3);
       const triangle = cell.map(i => points[i]);
 
       const [a, b, c] = triangle;
 
       p.stroke("black");
 
-      // const twoCorners = cornerPoints.filter(p => triangle.includes(p)).length >= 2;
-
-      // if(twoCorners) {
-      //   console.log(areaOfTrig(...triangle));
-      // }
-      
-
       p.triangle(a.x, a.y, b.x, b.y, c.x, c.y);
 
-      // const [a, b, c] = triangle;
-      // const distances = [
-      //   p.dist(a.x, a.y, b.x, b.y),
-      //   p.dist(b.x, b.y, c.x, c.y),
-      //   p.dist(a.x, a.y, c.x, c.y)
-      // ];
-
-      areas.push(drawInnerLines(p.shuffle(triangle)));
+      areas.push(drawInnerLines((triangle)));
     }
 
     console.log('min', p.min(areas));
