@@ -14,7 +14,7 @@ new p5((p: p5) => {
   let triangles: Array<Array<number>>;
 
   const offset = 100;
-  const MAX_POINTS = 200;
+  const MAX_POINTS = 10;
 
   function getAngles(triangle) {    
     const [A, B, C] = triangle;
@@ -34,14 +34,14 @@ new p5((p: p5) => {
     return [angleA, angleB, angleC];
   }
 
-  function drawLines(nbLines, triangle) {
+  function drawLines(innerLineCount, triangle) {
     const [a, b, c] = triangle;
 
-    for (let i = 0; i < nbLines; i++) {
-      let xa = p.map(i, 0, nbLines, a.x, c.x);
-      let ya = p.map(i, 0, nbLines, a.y, c.y);
-      let xb = p.map(i, 0, nbLines, b.x, c.x);
-      let yb = p.map(i, 0, nbLines, b.y, c.y);
+    for (let i = 0; i < innerLineCount; i++) {
+      let xa = p.map(i, 0, innerLineCount, a.x, c.x);
+      let ya = p.map(i, 0, innerLineCount, a.y, c.y);
+      let xb = p.map(i, 0, innerLineCount, b.x, c.x);
+      let yb = p.map(i, 0, innerLineCount, b.y, c.y);
 
       p.line(xa, ya, xb, yb);
     }
@@ -55,23 +55,19 @@ new p5((p: p5) => {
     const twoAnglesSame = (new Set(angles.map(a => p.floor(a)))).size !== angles.length;
     const isSkinnyTriangle = angles.some(ang => ang < 7);
     
-    // const maxLines = isSkinnyTriangle ? 1 : 40;
+    const maxLines = isSkinnyTriangle ? 1 : 100;
     // const maxStroke = isSkinnyTriangle ? 1 : 5;
 
-    let nbLines = p.floor(p.map(p.log(area * 0.1 + 1), 0, 12, 0, 50, true));
-    let strokeWeight = 1; //p.floor(p.map(p.log(area * 0.1 + 1), 0, 12, 1, 5, true));
+    let innerLineCount = p.floor(p.map(p.log(area * 0.001 + 1), 0, 12, 0, maxLines, true));
+    let strokeWeight = p.floor(p.map(p.log(area * 0.001 + 1), 0, 12, 5, 1, true));
 
-    if (isSkinnyTriangle) {
-      nbLines = 1;
-      strokeWeight = 1;
-    }
     
     p.strokeWeight(strokeWeight);
     
-    if (twoAnglesSame) {
-      drawLines(nbLines, triangle);
+    if (!twoAnglesSame) {
+      drawLines(innerLineCount, triangle);
     } else {
-      drawLines(nbLines, [c, b, a]); // horizontal
+      drawLines(innerLineCount, [c, b, a]); // horizontal
     }
 
     //   drawLines(...([c, a, b])); // left
@@ -122,7 +118,7 @@ new p5((p: p5) => {
 
   p.draw = () => {
     p.noFill();
-    const frameThickness = 5;
+    const frameThickness = 10;
 
     p.stroke("black");
     p.strokeWeight(frameThickness);
@@ -133,8 +129,11 @@ new p5((p: p5) => {
     const frameY = -square / 2;
 
     // outer rect - frame
-    p.rect(frameX, frameY, square, square);
+    p.rect(frameX - 20, frameY - 20, square + 40, square + 40);
 
+    // inner rect - frame
+    p.rect(frameX, frameY, square, square);
+  
     p.translate(frameX, frameY);
 
     p.stroke("black");
