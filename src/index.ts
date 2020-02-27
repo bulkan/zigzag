@@ -55,22 +55,20 @@ new p5((p: p5) => {
     const twoAnglesSame = (new Set(angles.map(a => p.floor(a)))).size !== angles.length;
     const isSkinnyTriangle = angles.some(ang => ang < 7);
     
-    const maxLines = isSkinnyTriangle ? 1 : 100;
-    // const maxStroke = isSkinnyTriangle ? 1 : 5;
+    const maxLines = isSkinnyTriangle ? 50 : 200;
 
-    let innerLineCount = p.floor(p.map(p.log(area * 0.001 + 1), 0, 12, 0, maxLines, true));
-    let strokeWeight = p.floor(p.map(p.log(area * 0.001 + 1), 0, 12, 5, 1, true));
-
+    let innerLineCount = p.floor(p.map(p.log(area * 0.0001 + 1), 0, 12, 1, maxLines, true));
+    let strokeWeight = p.floor(p.map(p.log(area * 0.0001 + 1), 0, 12, 5, 1, true));
     
     p.strokeWeight(strokeWeight);
     
     if (!twoAnglesSame) {
       drawLines(innerLineCount, triangle);
-    } else {
+    } else if (isSkinnyTriangle) {
       drawLines(innerLineCount, [c, b, a]); // horizontal
+    } else {
+      drawLines(innerLineCount, [c, a, b]); // left
     }
-
-    //   drawLines(...([c, a, b])); // left
   
     return area;
   }
@@ -86,6 +84,8 @@ new p5((p: p5) => {
         return false;
       }
     };
+
+    p.smooth();
 
     square = fitSquares(p.windowWidth - offset, p.windowHeight - offset, 1);
 
@@ -103,13 +103,13 @@ new p5((p: p5) => {
       p.createVector(square, square)
     ]
 
-    points = p.shuffle([
+    points = [
       ...cornerPoints,
       // p.createVector(square / 2, 100),
       // p.createVector(10, 200),
       // p.createVector(square - 10, 200),
       ...points
-    ]);
+    ];
 
     triangles = dt(points.map(p => [p.x, p.y]));
     console.log('sq', areaOfSquare / 2 );
