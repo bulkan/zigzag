@@ -14,7 +14,7 @@ new p5((p: p5) => {
   let triangles: Array<Array<number>>;
 
   const offset = 100;
-  const MAX_POINTS = 10;
+  const MAX_POINTS = 40;
 
   function getAngles(triangle) {    
     const [A, B, C] = triangle;
