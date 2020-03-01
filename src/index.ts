@@ -1,19 +1,25 @@
 import p5, { Vector } from "p5";
-import palettes from "nice-color-palettes";
 import dt from "delaunay-triangulate";
 import { areaOfTrig } from "./util";
 
+type ZigZagParams = {
+  large?: boolean;
+}
+
 new p5((p: p5) => {
-  let palette = p.random(palettes);
   let background = "white";
   let square;
   let areaOfSquare;
   let cornerPoints;
+  
+  const scaleFactor = 1;
+  let canvas: p5.Graphics | p5;
 
   let points: Array<Vector>;
   let triangles: Array<Array<number>>;
 
-  const offset = 100;
+  const offset = 20;
+  const squareOffset = 100;
   const MAX_POINTS = 40;
 
   function getAngles(triangle) {    
@@ -43,7 +49,7 @@ new p5((p: p5) => {
       let xb = p.map(i, 0, innerLineCount, b.x, c.x);
       let yb = p.map(i, 0, innerLineCount, b.y, c.y);
 
-      p.line(xa, ya, xb, yb);
+      canvas.line(xa * scaleFactor, ya * scaleFactor, xb * scaleFactor, yb * scaleFactor);
     }
   }
   
@@ -60,34 +66,44 @@ new p5((p: p5) => {
     let innerLineCount = p.floor(p.map(p.log(area * 0.0001 + 1), 0, 12, 1, maxLines, true));
     let strokeWeight = p.floor(p.map(p.log(area * 0.0001 + 1), 0, 12, 5, 1, true));
     
-    p.strokeWeight(strokeWeight);
+    p.strokeWeight(strokeWeight * scaleFactor);
     
     if (!twoAnglesSame) {
-      drawLines(innerLineCount, triangle);
+      drawLines(innerLineCount * scaleFactor, triangle);
     } else if (isSkinnyTriangle) {
-      drawLines(innerLineCount, [c, b, a]); // horizontal
+      drawLines(innerLineCount * scaleFactor, [c, b, a]); // horizontal
     } else {
-      drawLines(innerLineCount, [c, a, b]); // left
+      drawLines(innerLineCount * scaleFactor, [c, a, b]); // left
     }
-  
-    return area;
   }
 
   p.setup = () => {
-    p.pixelDensity(window.devicePixelRatio || 1);
+    const params = p.getURLParams() as ZigZagParams;
+
+    canvas = p;
+
+    if (params.large) {
+      canvas = p.createGraphics(p.windowWidth * scaleFactor + offset, p.windowHeight * scaleFactor + offset);
+    }
+    
     p.createCanvas(p.windowWidth, p.windowHeight);
-    p.background(background);
+
+    canvas.pixelDensity(window.devicePixelRatio || 1);
+    canvas.background(background);
 
     document.onkeydown = function(e) {
       if (e.metaKey && e.keyCode === 83) {
-        p.saveCanvas(`zigzag-${Date.now()}`, "png");
+
+        if(canvas === p) {
+          canvas.saveCanvas(`zigzag-main-${Date.now()}`, "png");
+        } else {
+          p.save(canvas, `zigzag-${Date.now()}`, "png");
+        }
         return false;
       }
     };
 
-    p.smooth();
-
-    square = fitSquares(p.windowWidth - offset, p.windowHeight - offset, 1);
+    square = fitSquares(canvas.width - squareOffset, p.height - squareOffset, 1);
 
     areaOfSquare = square * square;
 
@@ -112,60 +128,61 @@ new p5((p: p5) => {
     ];
 
     triangles = dt(points.map(p => [p.x, p.y]));
-    console.log('sq', areaOfSquare / 2 );
     p.noLoop();
   };
 
   p.draw = () => {
-    p.noFill();
-    const frameThickness = 10;
+    canvas.noFill();
+    const frameThickness = 10 * scaleFactor;
 
-    p.stroke("black");
-    p.strokeWeight(frameThickness);
+    canvas.stroke("black");
+    canvas.strokeWeight(frameThickness);
 
-    p.translate(p.windowWidth / 2, p.windowHeight / 2);
+    canvas.translate(canvas.width / 2, canvas.height / 2);
 
-    const frameX = -square / 2;
-    const frameY = -square / 2;
+    // center of the square
+    const frameX = -square * scaleFactor / 2;
+    const frameY = -square * scaleFactor / 2;
 
     // outer rect - frame
-    p.rect(frameX - 20, frameY - 20, square + 40, square + 40);
+    canvas.rect(frameX - offset, frameY - offset, (square * scaleFactor) + offset * 2, (square  * scaleFactor) + offset * 2);
 
     // inner rect - frame
-    p.rect(frameX, frameY, square, square);
+    canvas.rect(frameX - (scaleFactor), frameY - (scaleFactor), (square * scaleFactor), (square  * scaleFactor));
   
-    p.translate(frameX, frameY);
+    canvas.translate(frameX, frameY);
 
-    p.stroke("black");
-    p.strokeWeight(5);
+    canvas.stroke("black");
+    canvas.strokeWeight(5);
 
-    let areas = [];
-    
     for (let i = 0; i < triangles.length; i++) {
       const cell = triangles[i];
-      // p.fill(palette[colorIndex]);
-      // colorIndex = (colorIndex + palette.length - 1) % palette.length;
-      
-      p.strokeWeight(3);
+
+      canvas.strokeWeight(3);
       const triangle = cell.map(i => points[i]);
 
       const [a, b, c] = triangle;
 
-      p.stroke("black");
+      canvas.stroke("black");
 
-      p.triangle(a.x, a.y, b.x, b.y, c.x, c.y);
+      canvas.triangle(a.x * scaleFactor, a.y * scaleFactor, b.x * scaleFactor, b.y * scaleFactor, c.x * scaleFactor, c.y * scaleFactor);
 
-      areas.push(drawInnerLines((triangle)));
+      drawInnerLines((triangle));
     }
 
-    console.log('min', p.min(areas));
-    console.log('max', p.max(areas));
+    // console.log('min', p.min(areas));
+    // console.log('max', p.max(areas));
+    console.log('done drawing');
+
+    if(canvas !== p) {
+      p.save(canvas, `zigzag-${Date.now()}`, "png");
+    }
   };
 });
 
 function fitSquares(width: number, height: number, n) {
-  let sx,
-    sy = 0;
+  let sx = 0
+  let sy = 0;
 
   const px = Math.ceil(Math.sqrt((n * width) / height));
 
