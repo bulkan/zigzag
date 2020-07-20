@@ -14,17 +14,17 @@
   "author": "Bulkan Evcimen <bulkan@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@types/jest": "^25.1.3",
     "delaunay-triangulate": "^1.1.6",
     "nice-color-palettes": "^3.0.0",
-    "p5": "^0.10.2"
+    "p5": "^1.0.0"
   },
   "devDependencies": {
     "@types/p5": "^0.9.0",
-    "jest": "^25.1.0",
-    "now": "^17.0.3",
+    "@types/jest": "^26.0.5",
+    "jest": "^26.1.0",
+    "now": "^19.1.2",
     "parcel-bundler": "^1.12.4",
-    "ts-jest": "^25.2.1",
+    "ts-jest": "^26.1.3",
     "typescript": "^3.7.5"
   },
   "browserslist": [
